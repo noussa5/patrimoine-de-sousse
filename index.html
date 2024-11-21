@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="data/municipalitsdesousse_1.js"></script>
+        <script src="data/gouvernoratdesousse_2.js"></script>
+        <script src="data/Gouvernorats_TN_3.js"></script>
+        <script src="data/muse_4.js"></script>
+        <script src="data/monuments_5.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:2
+        }).fitBounds([[35.21890035188416,9.082144830374128],[37.394584646132984,13.613533828587064]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 2,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        function pop_municipalitsdesousse_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">@id</th>\
+                        <td class="visible-with-data" id="@id">' + (feature.properties['@id'] !== null ? autolinker.link(feature.properties['@id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['FID'] !== null ? autolinker.link(feature.properties['FID'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">name_fr</th>\
+                        <td class="visible-with-data" id="name_fr">' + (feature.properties['name_fr'] !== null ? autolinker.link(feature.properties['name_fr'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ref_tn_cod'] !== null ? autolinker.link(feature.properties['ref_tn_cod'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">type</th>\
+                        <td class="visible-with-data" id="type">' + (feature.properties['type'] !== null ? autolinker.link(feature.properties['type'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">image</th>\
+                        <td class="visible-with-data" id="image">' + (feature.properties['image'] !== null ? autolinker.link(feature.properties['image'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_municipalitsdesousse_1_0() {
+            return {
+                pane: 'pane_municipalitsdesousse_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '5.0,1.0,2.0,1.0',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_municipalitsdesousse_1');
+        map.getPane('pane_municipalitsdesousse_1').style.zIndex = 401;
+        map.getPane('pane_municipalitsdesousse_1').style['mix-blend-mode'] = 'normal';
+        var layer_municipalitsdesousse_1 = new L.geoJson(json_municipalitsdesousse_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_municipalitsdesousse_1',
+            layerName: 'layer_municipalitsdesousse_1',
+            pane: 'pane_municipalitsdesousse_1',
+            onEachFeature: pop_municipalitsdesousse_1,
+            style: style_municipalitsdesousse_1_0,
+        });
+        bounds_group.addLayer(layer_municipalitsdesousse_1);
+        map.addLayer(layer_municipalitsdesousse_1);
+        function pop_gouvernoratdesousse_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ID'] !== null ? autolinker.link(feature.properties['ID'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">إسم ا�</th>\
+                        <td class="visible-with-data" id="إسم ا�">' + (feature.properties['إسم ا�'] !== null ? autolinker.link(feature.properties['إسم ا�'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">الموق</th>\
+                        <td class="visible-with-data" id="الموق">' + (feature.properties['الموق'] !== null ? autolinker.link(feature.properties['الموق'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">تاريخ</th>\
+                        <td class="visible-with-data" id="تاريخ">' + (feature.properties['تاريخ'] !== null ? autolinker.link(feature.properties['تاريخ'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">إسم �_1</th>\
+                        <td class="visible-with-data" id="إسم �_1">' + (feature.properties['إسم �_1'] !== null ? autolinker.link(feature.properties['إسم �_1'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">العنو</th>\
+                        <td class="visible-with-data" id="العنو">' + (feature.properties['العنو'] !== null ? autolinker.link(feature.properties['العنو'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">الحقب</th>\
+                        <td class="visible-with-data" id="الحقب">' + (feature.properties['الحقب'] !== null ? autolinker.link(feature.properties['الحقب'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">image</th>\
+                        <td class="visible-with-data" id="image">' + (feature.properties['image'] !== null ? '<img src="images/' + String(feature.properties['image']).replace(/[\\\/:]/g, '_').trim() + '">' : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_gouvernoratdesousse_2_0() {
+            return {
+                pane: 'pane_gouvernoratdesousse_2',
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0, 
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_gouvernoratdesousse_2');
+        map.getPane('pane_gouvernoratdesousse_2').style.zIndex = 402;
+        map.getPane('pane_gouvernoratdesousse_2').style['mix-blend-mode'] = 'normal';
+        var layer_gouvernoratdesousse_2 = new L.geoJson(json_gouvernoratdesousse_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_gouvernoratdesousse_2',
+            layerName: 'layer_gouvernoratdesousse_2',
+            pane: 'pane_gouvernoratdesousse_2',
+            onEachFeature: pop_gouvernoratdesousse_2,
+            style: style_gouvernoratdesousse_2_0,
+        });
+        bounds_group.addLayer(layer_gouvernoratdesousse_2);
+        map.addLayer(layer_gouvernoratdesousse_2);
+        function pop_Gouvernorats_TN_3(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">name_fr</th>\
+                        <td class="visible-with-data" id="name_fr">' + (feature.properties['name_fr'] !== null ? autolinker.link(feature.properties['name_fr'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">REF_TN_COD</th>\
+                        <td class="visible-with-data" id="REF_TN_COD">' + (feature.properties['REF_TN_COD'] !== null ? autolinker.link(feature.properties['REF_TN_COD'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Gouvernorats_TN_3_0() {
+            return {
+                pane: 'pane_Gouvernorats_TN_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 2.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Gouvernorats_TN_3');
+        map.getPane('pane_Gouvernorats_TN_3').style.zIndex = 403;
+        map.getPane('pane_Gouvernorats_TN_3').style['mix-blend-mode'] = 'normal';
+        var layer_Gouvernorats_TN_3 = new L.geoJson(json_Gouvernorats_TN_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Gouvernorats_TN_3',
+            layerName: 'layer_Gouvernorats_TN_3',
+            pane: 'pane_Gouvernorats_TN_3',
+            onEachFeature: pop_Gouvernorats_TN_3,
+            style: style_Gouvernorats_TN_3_0,
+        });
+        bounds_group.addLayer(layer_Gouvernorats_TN_3);
+        map.addLayer(layer_Gouvernorats_TN_3);
+        function pop_muse_4(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">gov_name_f</th>\
+                        <td class="visible-with-data" id="gov_name_f">' + (feature.properties['gov_name_f'] !== null ? autolinker.link(feature.properties['gov_name_f'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">gov_name_a</th>\
+                        <td class="visible-with-data" id="gov_name_a">' + (feature.properties['gov_name_a'] !== null ? autolinker.link(feature.properties['gov_name_a'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gov_id'] !== null ? autolinker.link(feature.properties['gov_id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['musee_name_a'] !== null ? autolinker.link(feature.properties['musee_name_a'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['musse_name_f'] !== null ? autolinker.link(feature.properties['musse_name_f'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['adresse_a'] !== null ? autolinker.link(feature.properties['adresse_a'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['adresse_f'] !== null ? autolinker.link(feature.properties['adresse_f'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Image</th>\
+                        <td class="visible-with-data" id="Image">' + (feature.properties['Image'] !== null ? '<img src="images/' + String(feature.properties['Image']).replace(/[\\\/:]/g, '_').trim() + '">' : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_muse_4_0() {
+            return {
+                pane: 'pane_muse_4',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/muse_4.svg',
+            iconSize: [26.599999999999998, 26.599999999999998]
+        }),
+                interactive: true,
+            }
+        }
+        map.createPane('pane_muse_4');
+        map.getPane('pane_muse_4').style.zIndex = 404;
+        map.getPane('pane_muse_4').style['mix-blend-mode'] = 'normal';
+        var layer_muse_4 = new L.geoJson(json_muse_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_muse_4',
+            layerName: 'layer_muse_4',
+            pane: 'pane_muse_4',
+            onEachFeature: pop_muse_4,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_muse_4_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_muse_4);
+        map.addLayer(layer_muse_4);
+        function pop_monuments_5(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">gov_name_f</th>\
+                        <td class="visible-with-data" id="gov_name_f">' + (feature.properties['gov_name_f'] !== null ? autolinker.link(feature.properties['gov_name_f'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['gov_name_a'] !== null ? autolinker.link(feature.properties['gov_name_a'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">gov_id</th>\
+                        <td class="visible-with-data" id="gov_id">' + (feature.properties['gov_id'] !== null ? autolinker.link(feature.properties['gov_id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Nom_du_site</th>\
+                        <td class="visible-with-data" id="Nom_du_site">' + (feature.properties['Nom_du_site'] !== null ? autolinker.link(feature.properties['Nom_du_site'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Nom_monument'] !== null ? autolinker.link(feature.properties['Nom_monument'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Dtae'] !== null ? autolinker.link(feature.properties['Dtae'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_monuments_5_0() {
+            return {
+                pane: 'pane_monuments_5',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/monuments_5.svg',
+            iconSize: [26.6, 26.6]
+        }),
+                interactive: true,
+            }
+        }
+        map.createPane('pane_monuments_5');
+        map.getPane('pane_monuments_5').style.zIndex = 405;
+        map.getPane('pane_monuments_5').style['mix-blend-mode'] = 'normal';
+        var layer_monuments_5 = new L.geoJson(json_monuments_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_monuments_5',
+            layerName: 'layer_monuments_5',
+            pane: 'pane_monuments_5',
+            onEachFeature: pop_monuments_5,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_monuments_5_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_monuments_5);
+        map.addLayer(layer_monuments_5);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var overlaysTree = [
+            {label: '<img src="legend/monuments_5.png" /> monuments', layer: layer_monuments_5},
+            {label: '<img src="legend/muse_4.png" /> musée', layer: layer_muse_4},
+            {label: '<img src="legend/Gouvernorats_TN_3.png" /> Gouvernorats_TN', layer: layer_Gouvernorats_TN_3},
+            {label: '<img src="legend/gouvernoratdesousse_2.png" /> gouvernorat de sousse', layer: layer_gouvernoratdesousse_2},
+            {label: '<img src="legend/municipalitsdesousse_1.png" /> municipalités de sousse', layer: layer_municipalitsdesousse_1},
+            {label: "OpenStreetMap", layer: layer_OpenStreetMap_0, radioGroup: 'bm' },]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        map.addControl(new L.Control.Search({
+            layer: layer_Gouvernorats_TN_3,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'name_fr'}));
+        document.getElementsByClassName('search-button')[0].className +=
+         ' fa fa-binoculars';
+        resetLabels([layer_gouvernoratdesousse_2]);
+        map.on("zoomend", function(){
+            resetLabels([layer_gouvernoratdesousse_2]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_gouvernoratdesousse_2]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_gouvernoratdesousse_2]);
+        });
+        </script>
+    </body>
+</html>
